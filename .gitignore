@@ -1,0 +1,15 @@
+# Virtual environment
+.venv/
+
+# Editor settings
+.vscode/
+
+# Exploratory / scratch notebooks and data, not part of the final case study
+exploration/
+
+# Working notes, not meant for the published project
+PROJECT_PLAN.md
+Project_thoughts
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
