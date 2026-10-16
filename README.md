@@ -1,51 +1,57 @@
 # A/B Testing Case Study: Landing Page Call-to-Action Button
 
-A portfolio project demonstrating the full A/B testing workflow a data scientist would run in industry — from **experiment design** through **results analysis** — for a hypothetical test of a new landing-page button ("Enroll Now" vs. "Secure Free Trial").
+A full A/B test, from experiment design to a ship/don't-ship call, for a new landing-page button ("Enroll Now" vs. "Secure Free Trial").
 
-**Start here:** [`ab_test_case_study.ipynb`](ab_test_case_study.ipynb)
+![CTR by group](ctr_by_group.png)
 
-## What this project demonstrates
+**Problem.** A team wants to know whether changing the call-to-action button raises click-through rate (CTR) enough to be worth shipping. The real question isn't "is there a difference?" but "is the lift big enough to act on?"
 
-- **Experiment design**: business & statistical hypothesis formulation, primary metric (OEC) selection, randomization unit and data requirements, and the cross-functional data collection process (stakeholder alignment, engineering instrumentation, QA/A-A testing, SRM monitoring).
-- **Power analysis**: deriving required sample size and estimated test duration from a significance level, target power, and an absolute Minimum Detectable Effect (MDE) of 3 percentage points (≈20% relative lift).
-- **Data validation**: sanity checks (duplicates, missing values, mutually exclusive assignment, Sample Ratio Mismatch) on the resulting dataset.
-- **Statistical test selection**: reasoning through when to use a z-test for proportions vs. a t-test, chi-square test, or non-parametric alternatives, and justifying the choice via the Central Limit Theorem.
-- **Significance testing**: pooled-proportion two-sample z-test, p-value, and rejection-region visualization.
-- **Practical significance**: confidence intervals compared against the pre-registered MDE, and an honest discussion of what to do when a result is statistically but not conclusively practically significant.
+**Approach.**
+- **Sized the test before seeing data:** power analysis at α = 0.05 and 80% power, with an absolute MDE of 3pp (15% → 18%). That gives 2,399 users per group, or 2 full weeks at 200 visitors/day per arm.
+- **Picked a two-sample z-test for proportions** over a t-test or chi-square, since the metric is binary and both groups pass the CLT rule of thumb (np, n(1−p) ≥ 10).
+- **Set the decision rule upfront:** ship if the lift is significant and the observed lift is at least the 3pp MDE. The 95% CI is reported alongside it.
 
-## Results
+**Results** (synthetic data, 5,600 users over 14 days, `ab_test_case_study.ipynb`):
 
 | | Control ("Secure Free Trial") | Experimental ("Enroll Now") |
 |---|---|---|
-| CTR | 15.3% | 18.6% |
+| Users | 2,844 | 2,756 |
+| CTR | 15.5% | 19.6% |
 
-- **Statistical significance:** two-sample z-test for proportions, p ≈ 0.0007 (α = 0.05) → reject $H_0$; the CTR difference is real, not noise.
-- **Practical significance:** observed lift is 3.3pp, 95% CI **[1.4pp, 5.2pp]**, against a pre-registered MDE of **3pp absolute (≈20% relative)**. The CI's lower bound (1.4pp) falls short of the MDE, so the result is statistically but not yet *practically* significant.
-- **Recommendation:** don't ship yet — extend the test to collect more data and narrow the CI, rather than deciding on a result that's directionally positive but not conclusively above the bar stakeholders set.
+- **Statistically significant:** z = 4.06, p < 0.001.
+- **Clears the bar:** the observed lift is 4.1pp against a 3pp MDE, with a 95% CI of [2.1pp, 6.1pp].
+- **Recommendation: ship "Enroll Now"**, and keep monitoring CTR and downstream conversion after rollout.
 
-See the notebook's Conclusion section for the full reasoning and its "Recommendations for a real launch" (extension plan, guardrail monitoring, novelty/primacy effects, segment analysis).
+## Limitations & next steps
 
-## A note on the data
+- **The data is simulated.** No real experiment was run. The notebook generates `ab_test_click_data.csv` from the design, with random 50/50 assignment, random arrival times and a true experimental CTR of 19%. It shows the workflow, not a real product result.
+- **The CI doesn't fully clear 3pp.** Proving that the true lift is above 3pp, not just above 0, would take about 18,000 users per arm (around 90 days). The notebook shows the calculation and explains why the point-estimate rule was chosen instead.
+- **There's only one metric.** A real decision would also weigh downstream conversion and guardrail metrics.
+- **Next steps:** segment analysis (new vs. returning visitors, mobile vs. desktop), a post-launch holdback to track novelty effects, and sequential testing for follow-up experiments.
 
-No real experiment was run for this project. The dataset (`ab_test_click_data.csv`) is synthetically generated *inside* the notebook, using the exact sample size the power analysis calculates — so the "data collection" step in the notebook is a stand-in for a real experiment pipeline, not an independent, disconnected script. This is stated explicitly throughout the notebook.
+## Revision note
 
-## Repository structure
+An earlier version recommended **extending the test**. In that version CTR rose from 15.3% to 18.6% (p < 0.001), but the 95% CI's lower bound (1.4pp) fell short of the 3pp bar. When I reviewed it, I found that rule didn't match the design: the test was powered to detect a lift above zero, not to prove one above 3pp, which would take about 18,000 users per arm even at the 4.1pp lift seen now. I aligned the decision rule with the power analysis and made the simulation more realistic (random 50/50 assignment, arrivals spread over two full weeks). That changed the numbers above and the recommendation to ship.
 
-```
-ab_test_case_study.ipynb   — the main notebook (start here)
-ab_test_click_data.csv     — synthetic dataset generated by the notebook
-control_experimental.png   — diagram of the control vs. experimental button
-exploration/                — earlier/scratch notebooks and larger raw datasets
-                               (landing page & marketing A/B exploration, initial
-                               case study draft), gitignored — not part of the
-                               final showcased analysis, kept locally for reference
-```
-
-## Running it
+## Run it
 
 ```
-pip install pandas numpy scipy statsmodels matplotlib seaborn
+pip install -r requirements.txt
 jupyter notebook ab_test_case_study.ipynb
 ```
 
-Run all cells top to bottom — the notebook generates its own data as part of Part 1.
+Run all cells top to bottom. Part 1 generates the dataset and Part 2 analyzes it.
+
+## Project structure
+
+```
+ab_test_case_study.ipynb   main notebook (start here)
+ab_test_click_data.csv     synthetic dataset generated by the notebook
+ctr_by_group.png           CTR chart saved by the notebook
+control_experimental.png   control vs. experimental button diagram
+requirements.txt           Python dependencies
+```
+
+**Tech stack:** Python, pandas, NumPy, SciPy, statsmodels, matplotlib, Jupyter
+
+**Contact:** [LinkedIn](https://www.linkedin.com/in/richlove-frimpong)
